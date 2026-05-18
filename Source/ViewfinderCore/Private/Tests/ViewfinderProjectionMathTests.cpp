@@ -94,6 +94,7 @@ bool FViewfinderProjectionSphereCullTest::RunTest(const FString& Parameters)
 	TestFalse(TEXT("sphere behind camera is outside frustum"), FViewfinderProjectionMath::IsSphereInsideOrIntersectingFrustum(FVector(-100.0, 0.0, 0.0), 10.0f, Params));
 	TestFalse(TEXT("sphere beyond far clip is outside frustum"), FViewfinderProjectionMath::IsSphereInsideOrIntersectingFrustum(FVector(1200.0, 0.0, 0.0), 10.0f, Params));
 	TestTrue(TEXT("sphere touching side plane intersects frustum"), FViewfinderProjectionMath::IsSphereInsideOrIntersectingFrustum(FVector(100.0, 105.0, 0.0), 10.0f, Params));
+	TestTrue(TEXT("sphere crossing unnormalized side plane intersects frustum"), FViewfinderProjectionMath::IsSphereInsideOrIntersectingFrustum(FVector(100.0, 114.0, 0.0), 10.0f, Params));
 	return true;
 }
 

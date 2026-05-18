@@ -23,12 +23,26 @@ bool FViewfinderProjectionMath::IsPointInsideFrustum(const FVector& CameraSpaceP
 bool FViewfinderProjectionMath::IsSphereInsideOrIntersectingFrustum(const FVector& CameraSpaceCenter, float Radius, const FViewfinderProjectionParams& Params)
 {
 	const float SafeRadius = FMath::Max(Radius, 0.0f);
-	return EvaluateClipPlane(CameraSpaceCenter, Params, EClipPlane::Near) >= -SafeRadius
-		&& EvaluateClipPlane(CameraSpaceCenter, Params, EClipPlane::Far) >= -SafeRadius
-		&& EvaluateClipPlane(CameraSpaceCenter, Params, EClipPlane::Left) >= -SafeRadius
-		&& EvaluateClipPlane(CameraSpaceCenter, Params, EClipPlane::Right) >= -SafeRadius
-		&& EvaluateClipPlane(CameraSpaceCenter, Params, EClipPlane::Bottom) >= -SafeRadius
-		&& EvaluateClipPlane(CameraSpaceCenter, Params, EClipPlane::Top) >= -SafeRadius;
+	const EClipPlane Planes[] =
+	{
+		EClipPlane::Near,
+		EClipPlane::Far,
+		EClipPlane::Left,
+		EClipPlane::Right,
+		EClipPlane::Bottom,
+		EClipPlane::Top
+	};
+
+	for (const EClipPlane Plane : Planes)
+	{
+		const float PlaneDistance = EvaluateClipPlane(CameraSpaceCenter, Params, Plane) / GetClipPlaneNormalLength(Params, Plane);
+		if (PlaneDistance < -SafeRadius)
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 bool FViewfinderProjectionMath::ProjectCameraPointToPhotoUV(const FVector& CameraSpacePoint, const FViewfinderProjectionParams& Params, FVector2D& OutUV)
@@ -112,6 +126,30 @@ float FViewfinderProjectionMath::EvaluateClipPlane(const FVector& Point, const F
 		return Point.X * TanHalfVertical - Point.Z;
 	default:
 		return -1.0f;
+	}
+}
+
+float FViewfinderProjectionMath::GetClipPlaneNormalLength(const FViewfinderProjectionParams& Params, EClipPlane Plane)
+{
+	switch (Plane)
+	{
+	case EClipPlane::Near:
+	case EClipPlane::Far:
+		return 1.0f;
+	case EClipPlane::Left:
+	case EClipPlane::Right:
+	{
+		const float TanHalfHorizontal = GetTanHalfHorizontalFov(Params);
+		return FMath::Sqrt(1.0f + FMath::Square(TanHalfHorizontal));
+	}
+	case EClipPlane::Bottom:
+	case EClipPlane::Top:
+	{
+		const float TanHalfVertical = GetTanHalfVerticalFov(Params);
+		return FMath::Sqrt(1.0f + FMath::Square(TanHalfVertical));
+	}
+	default:
+		return 1.0f;
 	}
 }
 

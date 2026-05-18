@@ -69,5 +69,6 @@ private:
 	};
 
 	static float EvaluateClipPlane(const FVector& Point, const FViewfinderProjectionParams& Params, EClipPlane Plane);
+	static float GetClipPlaneNormalLength(const FViewfinderProjectionParams& Params, EClipPlane Plane);
 	static void ClipPolygonAgainstPlane(const TArray<FVector>& InPolygon, const FViewfinderProjectionParams& Params, EClipPlane Plane, TArray<FVector>& OutPolygon);
 };
