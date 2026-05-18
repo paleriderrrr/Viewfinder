@@ -56,6 +56,7 @@ public:
 	static bool ProjectCameraPointToPhotoUV(const FVector& CameraSpacePoint, const FViewfinderProjectionParams& Params, FVector2D& OutUV);
 	static void ClipTriangleToFrustum(const FVector& A, const FVector& B, const FVector& C, const FViewfinderProjectionParams& Params, TArray<FVector>& OutPolygon);
 	static FVector BuildPlacedWorldPosition(const FVector& CameraSpacePoint, const FViewfinderProjectionParams& Params, const FTransform& PhotoPlaneTransform, float PhotoPlaneDistance);
+	static void TransformPoints(const TArray<FVector>& InPoints, const FTransform& FirstTransform, const FTransform& SecondTransform, TArray<FVector>& OutPoints);
 
 private:
 	enum class EClipPlane : uint8

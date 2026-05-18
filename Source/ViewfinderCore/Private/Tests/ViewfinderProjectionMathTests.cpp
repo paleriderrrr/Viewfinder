@@ -98,4 +98,23 @@ bool FViewfinderProjectionSphereCullTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FViewfinderProjectionTransformPointsTest, "Viewfinder.ProjectionMath.TransformPointsAppliesTransformsInOrder", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FViewfinderProjectionTransformPointsTest::RunTest(const FString& Parameters)
+{
+	TArray<FVector> Points;
+	Points.Add(FVector(1.0, 0.0, 0.0));
+	Points.Add(FVector(0.0, 1.0, 0.0));
+
+	const FTransform FirstTransform(FRotator(0.0, 90.0, 0.0), FVector(10.0, 0.0, 0.0));
+	const FTransform SecondTransform(FRotator::ZeroRotator, FVector(0.0, 5.0, 0.0));
+
+	TArray<FVector> TransformedPoints;
+	FViewfinderProjectionMath::TransformPoints(Points, FirstTransform, SecondTransform, TransformedPoints);
+
+	TestEqual(TEXT("transformed point count"), TransformedPoints.Num(), 2);
+	TestTrue(TEXT("first point transformed in order"), TransformedPoints[0].Equals(SecondTransform.TransformPosition(FirstTransform.TransformPosition(Points[0])), UE_SMALL_NUMBER));
+	TestTrue(TEXT("second point transformed in order"), TransformedPoints[1].Equals(SecondTransform.TransformPosition(FirstTransform.TransformPosition(Points[1])), UE_SMALL_NUMBER));
+	return true;
+}
+
 #endif

@@ -282,21 +282,24 @@ void AViewfinderCameraActor::CaptureStaticMeshComponent(UStaticMeshComponent& Me
 			continue;
 		}
 
+		TArray<FVector> CameraSpaceVertices;
+		FViewfinderProjectionMath::TransformPoints(MeshVertices, ComponentTransform, CaptureWorldToCamera, CameraSpaceVertices);
+
 		for (int32 TriangleIndex = 0; TriangleIndex + 2 < MeshTriangles.Num(); TriangleIndex += 3)
 		{
 			const int32 IndexA = MeshTriangles[TriangleIndex];
 			const int32 IndexB = MeshTriangles[TriangleIndex + 1];
 			const int32 IndexC = MeshTriangles[TriangleIndex + 2];
 
-			if (!MeshVertices.IsValidIndex(IndexA) || !MeshVertices.IsValidIndex(IndexB) || !MeshVertices.IsValidIndex(IndexC))
+			if (!CameraSpaceVertices.IsValidIndex(IndexA) || !CameraSpaceVertices.IsValidIndex(IndexB) || !CameraSpaceVertices.IsValidIndex(IndexC))
 			{
 				UE_LOG(LogViewfinderCamera, Error, TEXT("Static mesh %s section %d contains an invalid triangle index."), *StaticMesh->GetName(), SectionIndex);
 				continue;
 			}
 
-			const FVector CameraA = CaptureWorldToCamera.TransformPosition(ComponentTransform.TransformPosition(MeshVertices[IndexA]));
-			const FVector CameraB = CaptureWorldToCamera.TransformPosition(ComponentTransform.TransformPosition(MeshVertices[IndexB]));
-			const FVector CameraC = CaptureWorldToCamera.TransformPosition(ComponentTransform.TransformPosition(MeshVertices[IndexC]));
+			const FVector& CameraA = CameraSpaceVertices[IndexA];
+			const FVector& CameraB = CameraSpaceVertices[IndexB];
+			const FVector& CameraC = CameraSpaceVertices[IndexC];
 
 			TArray<FVector> ClippedPolygon;
 			FViewfinderProjectionMath::ClipTriangleToFrustum(CameraA, CameraB, CameraC, PhotoData.ProjectionParams, ClippedPolygon);

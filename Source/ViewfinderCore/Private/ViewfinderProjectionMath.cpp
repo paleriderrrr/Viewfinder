@@ -105,6 +105,16 @@ FVector FViewfinderProjectionMath::BuildPlacedWorldPosition(const FVector& Camer
 	return VirtualCameraOrigin + PlaneRotation.RotateVector(CameraSpacePoint * ReconstructionScale);
 }
 
+void FViewfinderProjectionMath::TransformPoints(const TArray<FVector>& InPoints, const FTransform& FirstTransform, const FTransform& SecondTransform, TArray<FVector>& OutPoints)
+{
+	OutPoints.Reset(InPoints.Num());
+
+	for (const FVector& Point : InPoints)
+	{
+		OutPoints.Add(SecondTransform.TransformPosition(FirstTransform.TransformPosition(Point)));
+	}
+}
+
 float FViewfinderProjectionMath::EvaluateClipPlane(const FVector& Point, const FViewfinderProjectionParams& Params, EClipPlane Plane)
 {
 	const float TanHalfHorizontal = GetTanHalfHorizontalFov(Params);
