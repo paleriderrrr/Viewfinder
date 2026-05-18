@@ -1,5 +1,6 @@
 #include "ViewfinderProjectionActor.h"
 
+#include "Components/PrimitiveComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "ProceduralMeshComponent.h"
 #include "ViewfinderPhotoData.h"
@@ -19,6 +20,7 @@ AViewfinderProjectionActor::AViewfinderProjectionActor()
 
 void AViewfinderProjectionActor::BuildProjection(UViewfinderPhotoData* InPhotoData, const FTransform& PhotoPlaneTransform)
 {
+	RestoreCapturedSourceComponents();
 	PhotoData = InPhotoData;
 
 	if (!PhotoData)
@@ -115,4 +117,48 @@ void AViewfinderProjectionActor::BuildProjection(UViewfinderPhotoData* InPhotoDa
 	DynamicPhotoMaterial = UMaterialInstanceDynamic::Create(PhotoMaterial, this);
 	DynamicPhotoMaterial->SetTextureParameterValue(TextureParameterName, PhotoData->RenderTarget);
 	ProjectionMesh->SetMaterial(0, DynamicPhotoMaterial);
+
+	if (bHideCapturedSourceComponents)
+	{
+		for (const FViewfinderCapturedSourceComponent& SourceComponent : PhotoData->CapturedSourceComponents)
+		{
+			UPrimitiveComponent* Component = SourceComponent.Component.Get();
+			if (!Component)
+			{
+				continue;
+			}
+
+			FViewfinderSourceComponentState State;
+			State.Component = Component;
+			State.bWasHiddenInGame = Component->bHiddenInGame;
+			State.PreviousCollisionEnabled = Component->GetCollisionEnabled();
+			HiddenSourceComponents.Add(State);
+
+			Component->SetHiddenInGame(true);
+			Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
+}
+
+void AViewfinderProjectionActor::RestoreCapturedSourceComponents()
+{
+	for (const FViewfinderSourceComponentState& State : HiddenSourceComponents)
+	{
+		UPrimitiveComponent* Component = State.Component.Get();
+		if (!Component)
+		{
+			continue;
+		}
+
+		Component->SetHiddenInGame(State.bWasHiddenInGame);
+		Component->SetCollisionEnabled(State.PreviousCollisionEnabled);
+	}
+
+	HiddenSourceComponents.Reset();
+}
+
+void AViewfinderProjectionActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	RestoreCapturedSourceComponents();
+	Super::EndPlay(EndPlayReason);
 }

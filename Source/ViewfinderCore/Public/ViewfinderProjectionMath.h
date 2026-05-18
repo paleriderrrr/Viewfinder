@@ -52,6 +52,7 @@ public:
 	static float GetTanHalfVerticalFov(const FViewfinderProjectionParams& Params);
 
 	static bool IsPointInsideFrustum(const FVector& CameraSpacePoint, const FViewfinderProjectionParams& Params);
+	static bool IsSphereInsideOrIntersectingFrustum(const FVector& CameraSpaceCenter, float Radius, const FViewfinderProjectionParams& Params);
 	static bool ProjectCameraPointToPhotoUV(const FVector& CameraSpacePoint, const FViewfinderProjectionParams& Params, FVector2D& OutUV);
 	static void ClipTriangleToFrustum(const FVector& A, const FVector& B, const FVector& C, const FViewfinderProjectionParams& Params, TArray<FVector>& OutPolygon);
 	static FVector BuildPlacedWorldPosition(const FVector& CameraSpacePoint, const FViewfinderProjectionParams& Params, const FTransform& PhotoPlaneTransform, float PhotoPlaneDistance);

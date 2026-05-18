@@ -20,6 +20,17 @@ bool FViewfinderProjectionMath::IsPointInsideFrustum(const FVector& CameraSpaceP
 		&& EvaluateClipPlane(CameraSpacePoint, Params, EClipPlane::Top) >= 0.0f;
 }
 
+bool FViewfinderProjectionMath::IsSphereInsideOrIntersectingFrustum(const FVector& CameraSpaceCenter, float Radius, const FViewfinderProjectionParams& Params)
+{
+	const float SafeRadius = FMath::Max(Radius, 0.0f);
+	return EvaluateClipPlane(CameraSpaceCenter, Params, EClipPlane::Near) >= -SafeRadius
+		&& EvaluateClipPlane(CameraSpaceCenter, Params, EClipPlane::Far) >= -SafeRadius
+		&& EvaluateClipPlane(CameraSpaceCenter, Params, EClipPlane::Left) >= -SafeRadius
+		&& EvaluateClipPlane(CameraSpaceCenter, Params, EClipPlane::Right) >= -SafeRadius
+		&& EvaluateClipPlane(CameraSpaceCenter, Params, EClipPlane::Bottom) >= -SafeRadius
+		&& EvaluateClipPlane(CameraSpaceCenter, Params, EClipPlane::Top) >= -SafeRadius;
+}
+
 bool FViewfinderProjectionMath::ProjectCameraPointToPhotoUV(const FVector& CameraSpacePoint, const FViewfinderProjectionParams& Params, FVector2D& OutUV)
 {
 	if (CameraSpacePoint.X <= KINDA_SMALL_NUMBER)

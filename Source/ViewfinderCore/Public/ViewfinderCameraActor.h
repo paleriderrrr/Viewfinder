@@ -42,6 +42,9 @@ public:
 	bool bCaptureOnlyMarkedActors = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewfinder|Placement")
+	bool bHideCapturedSourceComponentsOnPlace = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewfinder|Placement")
 	float HeldPhotoDistance = 160.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewfinder|Placement")
@@ -76,5 +79,7 @@ public:
 
 private:
 	void CaptureMarkedGeometry(UViewfinderPhotoData& PhotoData) const;
-	void CaptureStaticMeshComponent(const UStaticMeshComponent& MeshComponent, UViewfinderPhotoData& PhotoData) const;
+	void CaptureStaticMeshComponent(UStaticMeshComponent& MeshComponent, UViewfinderPhotoData& PhotoData) const;
+	bool IsStaticMeshComponentInPhotoFrustum(const UStaticMeshComponent& MeshComponent, const UViewfinderPhotoData& PhotoData) const;
+	void RecordCapturedSourceComponent(UStaticMeshComponent& MeshComponent, UViewfinderPhotoData& PhotoData) const;
 };

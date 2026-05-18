@@ -85,4 +85,16 @@ bool FViewfinderProjectionClipPartialTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FViewfinderProjectionSphereCullTest, "Viewfinder.ProjectionMath.SphereFrustumCull", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FViewfinderProjectionSphereCullTest::RunTest(const FString& Parameters)
+{
+	const FViewfinderProjectionParams Params = MakeUnitProjectionParams();
+
+	TestTrue(TEXT("sphere in front intersects frustum"), FViewfinderProjectionMath::IsSphereInsideOrIntersectingFrustum(FVector(100.0, 0.0, 0.0), 10.0f, Params));
+	TestFalse(TEXT("sphere behind camera is outside frustum"), FViewfinderProjectionMath::IsSphereInsideOrIntersectingFrustum(FVector(-100.0, 0.0, 0.0), 10.0f, Params));
+	TestFalse(TEXT("sphere beyond far clip is outside frustum"), FViewfinderProjectionMath::IsSphereInsideOrIntersectingFrustum(FVector(1200.0, 0.0, 0.0), 10.0f, Params));
+	TestTrue(TEXT("sphere touching side plane intersects frustum"), FViewfinderProjectionMath::IsSphereInsideOrIntersectingFrustum(FVector(100.0, 105.0, 0.0), 10.0f, Params));
+	return true;
+}
+
 #endif

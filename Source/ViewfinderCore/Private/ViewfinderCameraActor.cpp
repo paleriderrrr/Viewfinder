@@ -158,6 +158,7 @@ AViewfinderProjectionActor* AViewfinderCameraActor::PlacePhoto(UViewfinderPhotoD
 	ProjectionActor->PhotoMaterial = PhotoMaterial;
 	ProjectionActor->TextureParameterName = TextureParameterName;
 	ProjectionActor->PhotoPlaneDistance = PhotoPlaneDistance;
+	ProjectionActor->bHideCapturedSourceComponents = bHideCapturedSourceComponentsOnPlace;
 	ProjectionActor->BuildProjection(PhotoData, PhotoPlaneTransform);
 	return ProjectionActor;
 }
@@ -212,7 +213,7 @@ void AViewfinderCameraActor::CaptureMarkedGeometry(UViewfinderPhotoData& PhotoDa
 
 	for (TActorIterator<AActor> ActorIt(World); ActorIt; ++ActorIt)
 	{
-		const AActor* Actor = *ActorIt;
+		AActor* Actor = *ActorIt;
 		if (!Actor || Actor == this)
 		{
 			continue;
@@ -228,9 +229,14 @@ void AViewfinderCameraActor::CaptureMarkedGeometry(UViewfinderPhotoData& PhotoDa
 		TInlineComponentArray<UStaticMeshComponent*> StaticMeshComponents;
 		Actor->GetComponents(StaticMeshComponents);
 
-		for (const UStaticMeshComponent* MeshComponent : StaticMeshComponents)
+		for (UStaticMeshComponent* MeshComponent : StaticMeshComponents)
 		{
 			if (!MeshComponent || !MeshComponent->IsRegistered() || !MeshComponent->IsVisible())
+			{
+				continue;
+			}
+
+			if (!IsStaticMeshComponentInPhotoFrustum(*MeshComponent, PhotoData))
 			{
 				continue;
 			}
@@ -240,7 +246,7 @@ void AViewfinderCameraActor::CaptureMarkedGeometry(UViewfinderPhotoData& PhotoDa
 	}
 }
 
-void AViewfinderCameraActor::CaptureStaticMeshComponent(const UStaticMeshComponent& MeshComponent, UViewfinderPhotoData& PhotoData) const
+void AViewfinderCameraActor::CaptureStaticMeshComponent(UStaticMeshComponent& MeshComponent, UViewfinderPhotoData& PhotoData) const
 {
 	UStaticMesh* StaticMesh = MeshComponent.GetStaticMesh();
 	if (!StaticMesh)
@@ -258,6 +264,7 @@ void AViewfinderCameraActor::CaptureStaticMeshComponent(const UStaticMeshCompone
 
 	const FTransform ComponentTransform = MeshComponent.GetComponentTransform();
 	const FTransform CaptureWorldToCamera = PhotoData.CaptureTransform.Inverse();
+	const int32 OriginalTriangleCount = PhotoData.Triangles.Num();
 
 	for (int32 SectionIndex = 0; SectionIndex < SectionCount; ++SectionIndex)
 	{
@@ -318,4 +325,31 @@ void AViewfinderCameraActor::CaptureStaticMeshComponent(const UStaticMeshCompone
 			}
 		}
 	}
+
+	if (PhotoData.Triangles.Num() > OriginalTriangleCount)
+	{
+		RecordCapturedSourceComponent(MeshComponent, PhotoData);
+	}
+}
+
+bool AViewfinderCameraActor::IsStaticMeshComponentInPhotoFrustum(const UStaticMeshComponent& MeshComponent, const UViewfinderPhotoData& PhotoData) const
+{
+	const FTransform CaptureWorldToCamera = PhotoData.CaptureTransform.Inverse();
+	const FVector CameraSpaceCenter = CaptureWorldToCamera.TransformPosition(MeshComponent.Bounds.Origin);
+	return FViewfinderProjectionMath::IsSphereInsideOrIntersectingFrustum(CameraSpaceCenter, MeshComponent.Bounds.SphereRadius, PhotoData.ProjectionParams);
+}
+
+void AViewfinderCameraActor::RecordCapturedSourceComponent(UStaticMeshComponent& MeshComponent, UViewfinderPhotoData& PhotoData) const
+{
+	for (const FViewfinderCapturedSourceComponent& ExistingComponent : PhotoData.CapturedSourceComponents)
+	{
+		if (ExistingComponent.Component == &MeshComponent)
+		{
+			return;
+		}
+	}
+
+	FViewfinderCapturedSourceComponent CapturedComponent;
+	CapturedComponent.Component = &MeshComponent;
+	PhotoData.CapturedSourceComponents.Add(CapturedComponent);
 }
